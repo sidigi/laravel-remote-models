@@ -1,16 +1,16 @@
 {
-    "name": ":vendor_name/:package_name",
-    "description": ":package_description",
+    "name": "sidigi/laravel-remote-models",
+    "description": "Use remote requests in laravel eloquent models way",
     "keywords": [
-        ":vendor_name",
-        ":package_name"
+        "sidigi",
+        "laravel-remote-models"
     ],
-    "homepage": "https://github.com/spatie/:package_name",
+    "homepage": "https://github.com/spatie/laravel-remote-models",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": ":author_email",
+            "name": "Sidigi",
+            "email": "sidigicoder@gmail.com",
             "homepage": "https://spatie.be",
             "role": "Developer"
         }
@@ -25,12 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Spatie\\Skeleton\\": "src"
+            "Sidigi\\LaravelRemoteModels\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Spatie\\Skeleton\\Tests\\": "tests"
+            "Sidigi\\LaravelRemoteModels\\Tests\\": "tests"
         }
     },
     "scripts": {
