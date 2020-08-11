@@ -24,7 +24,7 @@ class UrlManager
             $path = Str::replaceFirst(sprintf('{%s}', $key), $parameter, $path);
         }
 
-        $validator = $this->validator->make(['url' => $this->urlGenerator->to($path)], [
+        $validator = $this->validator->make(['url' => $this->urlGenerator->to($path, $parameters)], [
             'url' => 'required|url',
         ], [
             'url.url' => sprintf('The given url [%s] format is invalid.', $path),

@@ -11,13 +11,12 @@
         {
             "name": "Sidigi",
             "email": "sidigicoder@gmail.com",
-            "homepage": "https://spatie.be",
+            "homepage": "https://github.com/sidigi",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^7.4",
-        "guzzlehttp/guzzle": "^7.0",
         "illuminate/http": "^7.24",
         "illuminate/support": "^7.24"
     },

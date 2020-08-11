@@ -2,186 +2,91 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
-use GuzzleHttp\Psr7\Request;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
-use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Sidigi\LaravelRemoteModels\Contracts\JsonApiClientInterface;
-use Sidigi\LaravelRemoteModels\Contracts\Response;
+use Sidigi\LaravelRemoteModels\Traits\HasJsonApiQueryFields;
 
 class JsonApiClient implements JsonApiClientInterface
 {
-    protected ClientInterface $client;
+    use ForwardsCalls,
+        HasJsonApiQueryFields;
+
+    protected PendingRequest $client;
     protected UrlManager $urlManager;
     protected ?string $path;
-    protected array $headers = [];
-    protected array $body = [];
+    protected array $options;
+    protected array $passthru = ['withHeaders'];
 
-    protected array $filters = [];
-    protected array $sorts = [];
-    protected array $pagination = [];
-    protected array $includes = [];
-    protected array $queryParams = [];
-
-    public function __construct(ClientInterface $client, UrlManager $urlManager)
+    public function __construct(PendingRequest $client, UrlManager $urlManager, array $options = [])
     {
         $this->client = $client;
         $this->urlManager = $urlManager;
         $this->path = null;
-    }
-
-    public function send(string $method, array $options = [])
-    {
-        dd($this->client->getConfig('request'));
-        $request = new Request(
-            $method,
-            $this->path, //base path
-            $options['headers'] ?? $this->headers
-        );
-
-        $uri = $request->getUri()
-            ->withPath($this->path)
-            ->withQuery(http_build_query($this->getQuery()));
-
-        return $this->sendRequest($request->withUri($uri));
-    }
-
-    public function sendRequest(RequestInterface $request) : ResponseInterface
-    {
-        return resolve(Response::class, ['response' => $this->client->sendRequest($request)]);
-    }
-
-    public function get(array $options = [])
-    {
-        return $this->send('GET', $options);
+        $this->options = $options;
     }
 
     public function getPaths() : array
     {
         // get from config
-
-        return [
-            'index_comments' => 'comments',
-            'index_comments_filter_by_post' => '/comments?postId={id}',
-            'todo_detail' => 'todo/{id}',
-        ];
+        return [];
     }
 
     public function withPath(string $path, array $parameters = [])
     {
-        $path = $this->getPaths()[$path] ?? $path;
-
-        $this->path = $this->urlManager->resolve($path, $parameters);
+        $this->path = $this->getPaths()[$path] ?? $path;
 
         return $this;
     }
 
-    public function withHeaders(array $headers)
+    public function get(string $url = null, array $parameters = [])
     {
-        $this->headers = $headers;
+        $url = $this->getFullUrl($url, Arr::except($parameters, ['query']));
 
-        return $this;
-    }
-
-    public function withBody(array $headers)
-    {
-        $this->headers = $headers;
-
-        return $this;
-    }
-
-    public function include(...$includes) : self
-    {
-        $includes = Arr::flatten($includes);
-
-        $this->includes = $this->sanitizeArray(array_merge($this->includes, $includes));
-
-        return $this;
-    }
-
-    public function orderBy(string $order, bool $asc = true) : self
-    {
-        if (! is_array($order)) {
-            $order = [$order => $asc];
+        if (! $url) {
+            throw new InvalidArgumentException('The given uri is null');
         }
 
-        collect($order)->each(function ($item, $key) {
-            $this->sorts[] = [$item => Str::lower($item) === 'asc' ? true : false];
-        });
-
-        return $this;
+        return $this->client->get(
+            $url,
+            $this->getQuery() + Arr::get($parameters, 'query', []) ?: []
+        );
     }
 
-    public function orderByDesc(string $order) : self
+    protected function getFullUrl(string $url = null, array $parameters = [])
     {
-        $this->orderBy($order, false);
-
-        return $this;
-    }
-
-    public function paginate(int $size = null, int $number = 1) : self
-    {
-        $this->pagination = [
-            'size' => $size,
-            'number' => $number,
-        ];
-
-        return $this;
-    }
-
-    public function getQuery() : array
-    {
-        $query = $this->queryParams;
-
-        $query['filter'] = collect($this->filters)->mapWithKeys(function ($value, $key) {
-            return [$key => implode(',', $value)];
-        })->toArray();
-
-        $query['sort'] = collect($this->sorts)->map(function ($item) {
-            return current($item) ? key($item) : '-'.key($item);
-        })->implode(',');
-
-        $query['include'] = implode(',', $this->includes);
-
-        $query['page'] = $this->pagination;
-
-        return collect($query)->filter()->toArray();
-    }
-
-    public function filter($column, $value = null) : self
-    {
-        if (is_array($column)) {
-            return $this->addArrayOfFilters($column);
+        if ($url && isset($this->getPaths()[$url])) {
+            $url = $this->getPaths()[$url];
         }
 
-        $this->filters[$column] = $this->sanitizeArray([$value]);
+        $baseUri = $this->options['base_uri'] ?? '';
 
-        return $this;
+        return $baseUri.'/'.$this->urlManager->resolve(
+            $url ?: $this->path ?: '',
+            $parameters
+        );
     }
 
-    protected function addArrayOfFilters($filters) : self
+    public function __call($method, $arguments)
     {
-        foreach ($filters as $key => $value) {
-            if (! is_scalar($value) && ! is_array($value)) {
-                throw new InvalidArgumentException('Filter column must be array or scalar');
-            }
+        if ($path = $this->getPaths()[Str::snake($method)] ?? null) {
+            $this->path = $path;
+            $this->query = $this->query + $arguments;
 
-            $this->filters[$key] = $this->sanitizeArray(
-                Arr::flatten([$value])
-            );
+            return $this;
         }
 
-        return $this;
-    }
+        $result = $this->forwardCallTo($this->client, $method, $arguments);
 
-    private function sanitizeArray(array $data = []) : array
-    {
-        return collect($data)
-            ->flatten()
-            ->unique()
-            ->toArray();
+        if ($result instanceof PendingRequest) {
+            $this->client = $result;
+
+            return $this;
+        }
+
+        return $result;
     }
 }
