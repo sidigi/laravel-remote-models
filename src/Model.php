@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use JsonSerializable;
 
-abstract class Model implements Arrayable, ArrayAccess //,Jsonable, JsonSerializable
+abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
     use HasAttributes, ForwardsCalls;
 
