@@ -2,20 +2,34 @@
 
 namespace Sidigi\LaravelRemoteModels\Tests;
 
-use PHPUnit\Framework\TestCase;
-use Sidigi\LaravelRemoteModels\Model;
+use GuzzleHttp\Client;
+use Orchestra\Testbench\TestCase;
+use Sidigi\LaravelRemoteModels\Contracts\Response as ResponseInterface;
+use Sidigi\LaravelRemoteModels\JsonApiClient;
+use Sidigi\LaravelRemoteModels\Response;
 
 class ExampleTest extends TestCase
 {
     /** @test */
     public function true_is_true()
     {
-        $model = new EloquentModelStub;
-        dd(EloquentModelStub::filter('id', 1));
-    }
-}
+        app()->bind(ResponseInterface::class, Response::class);
 
-class EloquentModelStub extends Model
-{
-    protected $guarded = [];
+        $client = app()->make(Client::class, [
+            [
+                'base_uri' => 'https://jsonplaceholder.typicode.com',
+            ],
+        ]);
+
+        $jsonApiClient = resolve(JsonApiClient::class, [
+            'client' => $client,
+        ]);
+
+        $response = $jsonApiClient
+            ->withPath('index_comments', ['id' => 1])
+            ->get()
+            ->toArray();
+
+        dd($response);
+    }
 }

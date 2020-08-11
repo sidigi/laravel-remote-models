@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^7.4",
-        "illuminate/database": "^7.24",
+        "guzzlehttp/guzzle": "^7.0",
         "illuminate/http": "^7.24",
         "illuminate/support": "^7.24"
     },
@@ -42,6 +42,13 @@
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
         "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Sidigi\\LaravelRemoteModels\\LaravelRemoteModelsServiceProvider"
+            ]
+        }
     },
     "config": {
         "sort-packages": true

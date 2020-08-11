@@ -1,36 +1,37 @@
 <?php
 
-namespace App\JsonApi;
+namespace Sidigi\LaravelRemoteModels;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Contracts\Validation\Factory;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class UrlManager
 {
-    public function bindParameters(string $path, array $parameters) : ?string
+    private UrlGenerator $urlGenerator;
+    private Factory $validator;
+
+    public function __construct(UrlGenerator $urlGenerator, Factory $validator)
+    {
+        $this->urlGenerator = $urlGenerator;
+        $this->validator = $validator;
+    }
+
+    public function resolve(string $path, array $parameters) : ?string
     {
         foreach ($parameters as $key => $parameter) {
             $path = Str::replaceFirst(sprintf('{%s}', $key), $parameter, $path);
         }
 
-        return $this->validate($path);
-    }
-
-    public function resolve(string $method, array $paths) : ?string
-    {
-        return Arr::get($paths, $method) ?: Arr::get($paths, Str::snake($method));
-    }
-
-    private function validate(string $path)
-    {
-        $validator = Validator::make(['url' => url($path)], [
+        $validator = $this->validator->make(['url' => $this->urlGenerator->to($path)], [
             'url' => 'required|url',
+        ], [
+            'url.url' => sprintf('The given url [%s] format is invalid.', $path),
         ]);
 
         if ($validator->fails()) {
-            throw new RuntimeException(sprintf($validator->errors()->first('url').' [%s]', $path));
+            throw new RuntimeException($validator->errors()->first('url'));
         }
 
         return $path;
