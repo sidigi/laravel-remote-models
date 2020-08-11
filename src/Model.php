@@ -58,7 +58,8 @@ abstract class Model implements Arrayable, ArrayAccess //,Jsonable, JsonSerializ
             } elseif ($totallyGuarded) {
                 throw new MassAssignmentException(sprintf(
                     'Add [%s] to fillable property to allow mass assignment on [%s].',
-                    $key, get_class($this)
+                    $key,
+                    get_class($this)
                 ));
             }
         }
