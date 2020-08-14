@@ -72,6 +72,12 @@ $comments = CommentClient::withPath('/comments/{id}', ['id' => 1])
 
 ```php
 
+use Sidigi\LaravelRemoteModels\JsonApi\Client;
+
+class CommentClient extends Client
+{
+}
+
 class Comment extends Model
 {
     protected $guarded = [];
@@ -83,9 +89,31 @@ class Comment extends Model
 }
 
 
-Comment::indexComments()->filterResponseItem(function ($item) {
-    return ['id' => 1];
-})->get()->first();
+$comment = Comment::indexComments()
+    ->withResponseKey('data')
+    ->filterResponseItem(function ($item) {
+        return ['id' => $item['id']];
+    })->get()->first();
+    
+App\RemoteModels\Comment^ {#192
+  #guarded: []
+  +timestamps: false
+  #attributes: array:1 [
+    "id" => 1
+  ]
+  #original: array:1 [
+    "id" => 1
+  ]
+  #changes: []
+  #casts: []
+  #classCastCache: []
+  #dates: []
+  #dateFormat: null
+  #appends: []
+  #fillable: []
+  #hidden: []
+  #visible: []
+}
 ```
 
 ## Testing
