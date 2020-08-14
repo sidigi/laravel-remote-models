@@ -2,6 +2,7 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
+use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\ForwardsCalls;
 
@@ -16,6 +17,13 @@ class Builder
     public function newModelInstance($attributes = [])
     {
         return $this->model->newInstance($attributes);
+    }
+
+    public function filterResponseItem(Closure $callback)
+    {
+        $this->filterResponseItemCallback = $callback;
+
+        return $this;
     }
 
     public function hydrate(array $items)
@@ -52,7 +60,17 @@ class Builder
             }
 
             if (! $this->isArrayOfItems($items)) {
+                if (is_callable($this->filterResponseItemCallback)) {
+                    $items = ($this->filterResponseItemCallback)($items);
+                }
+
                 return $this->newModelInstance($items);
+            }
+
+            if (is_callable($this->filterResponseItemCallback)) {
+                $items = collect($items)->map(function ($item) {
+                    return ($this->filterResponseItemCallback)($item);
+                })->toArray();
             }
 
             return $this->getModel()->newCollection(
