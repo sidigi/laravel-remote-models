@@ -34,9 +34,15 @@ class Comment extends Model
 }
 
 
-$comments = Comment::indexComments()->filterResponseItem(function ($item) {
-            return ['id' => $item['comment_id']];
-        })->get())
+$comments = Comment::withPath('/comments')->get())
+$comments = Comment::withPath('/comments/{id}', ['id' => 1])->get())
+$comments = Comment::withQuery(['active' => true])->get())
+```
+
+```php
+        Comment::indexComments()->filterResponseItem(function ($item) {
+            return ['id' => 1];
+        })->get()->first();
 ```
 
 ## Testing
