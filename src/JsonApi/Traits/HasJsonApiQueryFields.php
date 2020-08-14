@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidigi\LaravelRemoteModels\Traits;
+namespace Sidigi\LaravelRemoteModels\JsonApi\Traits;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -12,7 +12,6 @@ trait HasJsonApiQueryFields
     protected array $sorts = [];
     protected array $pagination = [];
     protected array $includes = [];
-    protected array $query = [];
 
     public function include(...$includes) : self
     {

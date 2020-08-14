@@ -42,11 +42,26 @@ class Builder
         $result = $this->forwardCallTo($this->client, $method, $parameters);
 
         if ($method === 'get') {
+            $items = $result->json() ?? [];
+
+            if (! $this->isArrayOfItems($items)) {
+                return $this->newModelInstance($items);
+            }
+
             return $this->getModel()->newCollection(
-                $this->model->hydrate($result->json() ?? [])->all()
+                $this->model->hydrate($items)->all()
             );
         }
 
         return $this;
+    }
+
+    private function isArrayOfItems(array $items) : bool
+    {
+        $itemsOfItemsCount = collect($items)->filter(function ($item) {
+            return is_array($item);
+        })->count();
+
+        return count($items) === $itemsOfItemsCount;
     }
 }

@@ -5,7 +5,9 @@ namespace Sidigi\LaravelRemoteModels;
 use ArrayAccess;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
 use Illuminate\Database\Eloquent\Concerns\HasAttributes;
+use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
 use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Collection;
@@ -14,11 +16,18 @@ use JsonSerializable;
 
 abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
-    use HasAttributes, ForwardsCalls;
+    use HasAttributes, ForwardsCalls, GuardsAttributes, HidesAttributes;
 
     public $timestamps = false;
 
-    abstract public function getClient();
+    abstract public function getClient() : ClientInterface;
+
+    public function __construct(array $attributes = [])
+    {
+        $this->syncOriginal();
+
+        $this->fill($attributes);
+    }
 
     public function newQuery()
     {

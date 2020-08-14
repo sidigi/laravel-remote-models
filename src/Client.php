@@ -7,44 +7,69 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
-use Sidigi\LaravelRemoteModels\Contracts\JsonApiClientInterface;
-use Sidigi\LaravelRemoteModels\Traits\HasJsonApiQueryFields;
 
-class JsonApiClient implements JsonApiClientInterface
+class Client implements ClientInterface
 {
-    use ForwardsCalls,
-        HasJsonApiQueryFields;
+    use ForwardsCalls;
 
     protected PendingRequest $client;
     protected UrlManager $urlManager;
     protected ?string $path;
-    protected array $options;
+    protected ?string $baseUri;
     protected array $passthru = ['withHeaders'];
+    protected array $query = [];
 
-    public function __construct(PendingRequest $client, UrlManager $urlManager, array $options = [])
-    {
+    public function __construct(
+        PendingRequest $client,
+        UrlManager $urlManager,
+        string $baseUri = null,
+        string $path = null
+    ) {
         $this->client = $client;
         $this->urlManager = $urlManager;
-        $this->path = null;
-        $this->options = $options;
+        $this->path = $path;
+        $this->baseUri = $baseUri;
     }
 
     public function getPaths() : array
     {
-        // get from config
-        return [];
+        return collect(config('laravel-remote-models.clients'))
+            ->first(function ($client) {
+                if ($this instanceof $client['client']) {
+                    return true;
+                }
+            })['paths'] ?? [];
     }
 
     public function withPath(string $path, array $parameters = [])
     {
-        $this->path = $this->getPaths()[$path] ?? $path;
+        $this->path = $this->getUrl($this->getPaths()[$path] ?? $path, $parameters);
+
+        return $this;
+    }
+
+    public function withBaseUri(string $baseUri)
+    {
+        $this->baseUri = $baseUri;
+
+        return $this;
+    }
+
+    public function withQuery(array $query = [])
+    {
+        $this->query = $query + $this->query;
 
         return $this;
     }
 
     public function get(string $url = null, array $parameters = [])
     {
-        $url = $this->getFullUrl($url, Arr::except($parameters, ['query']));
+        $url = $this->getUrl(
+            $this->baseUri.'/'.($url ?? $this->path),
+            Arr::except($parameters, ['query'])
+        );
+
+        $url = preg_replace('#(?<!:)/+#', '/', $url);
 
         if (! $url) {
             throw new InvalidArgumentException('The given uri is null');
@@ -56,16 +81,10 @@ class JsonApiClient implements JsonApiClientInterface
         );
     }
 
-    protected function getFullUrl(string $url = null, array $parameters = [])
+    protected function getUrl(string $url, array $parameters = [])
     {
-        if ($url && isset($this->getPaths()[$url])) {
-            $url = $this->getPaths()[$url];
-        }
-
-        $baseUri = $this->options['base_uri'] ?? '';
-
-        return $baseUri.'/'.$this->urlManager->resolve(
-            $url ?: $this->path ?: '',
+        return $this->urlManager->resolve(
+            $url,
             $parameters
         );
     }
@@ -73,8 +92,7 @@ class JsonApiClient implements JsonApiClientInterface
     public function __call($method, $arguments)
     {
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {
-            $this->path = $path;
-            $this->query = $this->query + $arguments;
+            $this->path = $this->getUrl($path, ...$arguments);
 
             return $this;
         }
