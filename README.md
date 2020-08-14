@@ -98,7 +98,7 @@ $comment = Comment::indexComments()
 //App\RemoteModels\Comment
 ```
 
-Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest` detail information about all methods (here)[https://laravel.com/docs/7.x/http-client]
+Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest` detail information about all methods [here](https://laravel.com/docs/7.x/http-client)
 
 ## Testing
 
