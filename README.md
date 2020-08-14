@@ -17,6 +17,26 @@ composer require sidigi/laravel-remote-models
 ## Usage
 
 ```php
+use Sidigi\LaravelRemoteModels\JsonApi\Client;
+
+class CommentClient extends Client
+{
+}
+
+class Comment extends Model
+{
+    protected $guarded = [];
+
+    public function getClient() : ClientInterface
+    {
+        return resolve(CommentClient::class);
+    }
+}
+
+
+$comments = Comment::indexComments()->filterResponseItem(function ($item) {
+            return ['id' => $item['comment_id']];
+        })->get())
 ```
 
 ## Testing
