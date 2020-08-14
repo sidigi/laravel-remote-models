@@ -3,10 +3,8 @@
 namespace Sidigi\LaravelRemoteModels;
 
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
-use InvalidArgumentException;
 
 class Client implements ClientInterface
 {
@@ -15,22 +13,16 @@ class Client implements ClientInterface
     protected PendingRequest $client;
     protected UrlManager $urlManager;
     protected ?string $path;
-    protected ?string $baseUri;
-    protected array $passthru = ['withHeaders'];
     protected array $query = [];
-    protected ?string $responseKey;
 
     public function __construct(
         PendingRequest $client,
         UrlManager $urlManager,
-        string $baseUri = null,
         string $path = null
     ) {
         $this->client = $client;
         $this->urlManager = $urlManager;
         $this->path = $path;
-        $this->baseUri = $baseUri;
-        $this->responseKey = null;
     }
 
     public function getPaths() : array
@@ -50,13 +42,6 @@ class Client implements ClientInterface
         return $this;
     }
 
-    public function withBaseUri(string $baseUri)
-    {
-        $this->baseUri = $baseUri;
-
-        return $this;
-    }
-
     public function withQuery(array $query = [])
     {
         $this->query = $query + $this->query;
@@ -64,29 +49,16 @@ class Client implements ClientInterface
         return $this;
     }
 
-    public function fromResponseKey(?string $responseKey)
-    {
-        $this->responseKey = $responseKey;
-
-        return $this;
-    }
-
     public function get(string $url = null, array $parameters = [])
     {
         $url = $this->getUrl(
-            $this->baseUri.'/'.($url ?? $this->path),
-            Arr::except($parameters, ['query'])
+            $url ?? $this->path,
+            $parameters
         );
-
-        $url = preg_replace('#(?<!:)/+#', '/', $url);
-
-        if (! $url) {
-            throw new InvalidArgumentException('The given uri is null');
-        }
 
         return $this->client->get(
             $url,
-            $this->getQuery() + Arr::get($parameters, 'query', []) ?: []
+            $this->getQuery()
         );
     }
 
@@ -96,11 +68,6 @@ class Client implements ClientInterface
             $url,
             $parameters
         );
-    }
-
-    public function getResponseKey()
-    {
-        return $this->responseKey;
     }
 
     public function __call($method, $arguments)

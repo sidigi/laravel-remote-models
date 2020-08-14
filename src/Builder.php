@@ -10,6 +10,8 @@ class Builder
 {
     use ForwardsCalls;
 
+    protected $responseKey = '';
+
     private $filterResponseItemCallback;
 
     protected Model $model;
@@ -17,6 +19,13 @@ class Builder
     public function newModelInstance($attributes = [])
     {
         return $this->model->newInstance($attributes);
+    }
+
+    public function withResponseKey(?string $responseKey)
+    {
+        $this->responseKey = $responseKey;
+
+        return $this;
     }
 
     public function filterResponseItem(Closure $callback)
@@ -39,6 +48,7 @@ class Builder
     {
         $this->model = $model;
         $this->client = $model->getClient();
+        $this->responseKey = config('laravel-remote-models.options.response_key');
 
         return $this;
     }
@@ -55,8 +65,8 @@ class Builder
         if ($method === 'get') {
             $items = $result->json() ?? [];
 
-            if ($key = $this->client->getResponseKey()) {
-                $items = Arr::get($items, $key, []);
+            if ($this->responseKey) {
+                $items = Arr::get($items, $this->responseKey, []);
             }
 
             if (! $this->isArrayOfItems($items)) {

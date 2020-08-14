@@ -50,8 +50,8 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
                     return (new $client(
                         $this->app->make(PendingRequest::class),
                         $this->app->make(UrlManager::class),
-                        $clientOptions['base_uri'] ?? null
-                    ))->fromResponseKey(config('laravel-remote-models.options.response_key', 'data'));
+                    ))
+                        ->baseUrl($clientOptions['base_uri'] ?? '');
                 });
             }
         });
