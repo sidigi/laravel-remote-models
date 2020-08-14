@@ -59,7 +59,7 @@ class Client implements ClientInterface
         return $this->client->get(
             $url,
             $this->getQuery()
-        )->throw();
+        );
     }
 
     protected function getUrl(string $url, array $parameters = [])
