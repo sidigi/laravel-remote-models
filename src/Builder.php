@@ -63,7 +63,8 @@ class Builder
         $result = $this->forwardCallTo($this->client, $method, $parameters);
 
         if ($method === 'get') {
-            dd(1);
+            $result->throw();
+
             $items = $result->json() ?? [];
 
             if ($this->responseKey) {
