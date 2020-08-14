@@ -102,8 +102,8 @@ $comment = Comment::indexComments()
 Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`. You can use all http client methods
 ```php
 $comment = Comment::indexComments()
-    ...
-    ->withHeaders(['X-Foo' => 'X-Baz'])   
+    ->withHeaders(['X-Foo' => 'X-Baz']) //withToken, withAuth, etc.
+    ->get()
 //App\RemoteModels\Comment
 ```
 
