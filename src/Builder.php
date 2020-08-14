@@ -2,11 +2,14 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class Builder
 {
     use ForwardsCalls;
+
+    private $filterResponseItemCallback;
 
     protected Model $model;
 
@@ -43,6 +46,10 @@ class Builder
 
         if ($method === 'get') {
             $items = $result->json() ?? [];
+
+            if ($key = $this->client->getResponseKey()) {
+                $items = Arr::get($items, $key, []);
+            }
 
             if (! $this->isArrayOfItems($items)) {
                 return $this->newModelInstance($items);

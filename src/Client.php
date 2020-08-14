@@ -18,6 +18,7 @@ class Client implements ClientInterface
     protected ?string $baseUri;
     protected array $passthru = ['withHeaders'];
     protected array $query = [];
+    protected ?string $responseKey;
 
     public function __construct(
         PendingRequest $client,
@@ -29,6 +30,7 @@ class Client implements ClientInterface
         $this->urlManager = $urlManager;
         $this->path = $path;
         $this->baseUri = $baseUri;
+        $this->responseKey = null;
     }
 
     public function getPaths() : array
@@ -62,6 +64,13 @@ class Client implements ClientInterface
         return $this;
     }
 
+    public function fromResponseKey(?string $responseKey)
+    {
+        $this->responseKey = $responseKey;
+
+        return $this;
+    }
+
     public function get(string $url = null, array $parameters = [])
     {
         $url = $this->getUrl(
@@ -87,6 +96,11 @@ class Client implements ClientInterface
             $url,
             $parameters
         );
+    }
+
+    public function getResponseKey()
+    {
+        return $this->responseKey;
     }
 
     public function __call($method, $arguments)

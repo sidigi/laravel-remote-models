@@ -34,7 +34,7 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
 
     protected function registerClients()
     {
-        $clients = config('laravel-remote-models.clients') ?? [];
+        $clients = config('laravel-remote-models.clients', []);
 
         collect($clients)->each(function ($clientOptions, $key) {
             $client = $clientOptions['client'] ?? null;
@@ -44,13 +44,14 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
             }
 
             //check instance of client
+
             if ($client) {
                 $this->app->bind($client, function () use ($client, $clientOptions) {
-                    return new $client(
+                    return (new $client(
                         $this->app->make(PendingRequest::class),
                         $this->app->make(UrlManager::class),
                         $clientOptions['base_uri'] ?? null
-                    );
+                    ))->fromResponseKey(config('laravel-remote-models.options.response_key', 'data'));
                 });
             }
         });
