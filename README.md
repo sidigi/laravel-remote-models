@@ -98,7 +98,15 @@ $comment = Comment::indexComments()
 //App\RemoteModels\Comment
 ```
 
-Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest` detail information about all methods [here](https://laravel.com/docs/7.x/http-client)
+Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`. You can use all http client methods
+```php
+$comment = Comment::indexComments()
+    ...
+    ->withHeaders(['X-Foo' => 'X-Baz'])   
+//App\RemoteModels\Comment
+```
+
+Detail information about laravel http client [here](https://laravel.com/docs/7.x/http-client)
 
 ## Testing
 
@@ -116,7 +124,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Security
 
-If you discover any security related issues, please email sidigi@gmail.com or use the issue tracker.
+If you discover any security related issues, please email sidigicoder@gmail.com or use the issue tracker.
 
 ## Credits
 
