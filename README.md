@@ -25,6 +25,7 @@ class CommentClient extends Client
 {
 }
 
+$comments = Comment::get('/comments/{id}', ['id' => 1])->get();
 $comments = Comment::withPath('/comments')->get();
 $comments = Comment::withPath('/comments/{id}', ['id' => 1])->get();
 $comments = Comment::withQuery(['active' => true])->get();
