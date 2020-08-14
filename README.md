@@ -95,26 +95,10 @@ $comment = Comment::indexComments()
         return ['id' => $item['id']];
     })->get()->first();
     
-App\RemoteModels\Comment^ {#192
-  #guarded: []
-  +timestamps: false
-  #attributes: array:1 [
-    "id" => 1
-  ]
-  #original: array:1 [
-    "id" => 1
-  ]
-  #changes: []
-  #casts: []
-  #classCastCache: []
-  #dates: []
-  #dateFormat: null
-  #appends: []
-  #fillable: []
-  #hidden: []
-  #visible: []
-}
+//App\RemoteModels\Comment
 ```
+
+Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest` detail information about all methods (here)[https://laravel.com/docs/7.x/http-client]
 
 ## Testing
 
