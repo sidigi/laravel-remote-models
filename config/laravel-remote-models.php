@@ -22,6 +22,8 @@ return [
     |        'client' =>  App\Clients\CommentClient::class,
     |        'base_uri' => 'base uri',
     |        'paths' => [
+    |            'index_comments' => 'comments',
+    |            'index_comments_by_post' => '/comments?postId={id}',
     |        ],
     |    ],
     |
