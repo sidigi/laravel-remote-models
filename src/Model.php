@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use JsonSerializable;
+use Sidigi\LaravelRemoteModels\Exceptions\ClientNotFoundException;
 
 abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
@@ -20,7 +21,23 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializab
 
     public $timestamps = false;
 
-    abstract public function getClient() : ClientInterface;
+    protected function getClientClass() : string
+    {
+        if (! $client = config('laravel-remote-models.models.'.static::class)) {
+            throw new ClientNotFoundException('Client not found');
+        }
+
+        if (is_string($client) && ! class_exists($client)) {
+            $client = config("laravel-remote-models.clients.$client.client");
+        }
+
+        return $client;
+    }
+
+    public function getClient() : ClientInterface
+    {
+        return resolve($this->getClientClass());
+    }
 
     public function __construct(array $attributes = [])
     {
