@@ -16,6 +16,31 @@ composer require sidigi/laravel-remote-models
 
 ## Usage
 
+### Config
+```php
+    'options' => [
+        'response_key' => 'data',
+    ],
+
+    'clients' => [
+        'comment-client' => [
+            'client' =>  App\RemoteClients\CommentClient::class,
+            'base_uri' => 'https://jsonplaceholder.typicode.com',
+            'paths' => [
+                'index_comments' => 'comments',
+                'index_comments_filter_by_post' => '/comments?postId={id}',
+                'todo_detail' => 'todos/{id}',
+            ],
+        ],
+    ],
+
+    'models' => [
+        App\RemoteModels\Comment::class => 'comment-client',
+        //or
+        App\RemoteModels\Comment::class => App\RemoteClients\CommentClient::class,
+    ],
+```
+
 ### Clients
 
 ```php
