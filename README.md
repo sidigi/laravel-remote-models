@@ -108,9 +108,9 @@ class Comment extends Model
 {
     protected $guarded = [];
 
-    public function getClient() : ClientInterface
+    public function getClientClass() : string
     {
-        return resolve(CommentClient::class);
+        return CommentClient::class;
     }
 }
 
