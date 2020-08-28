@@ -44,8 +44,8 @@ class PageBasedStrategy implements PaginationStrategyContract
 
         $pagination = $this->getPagination($client);
 
-        $number = Arr::get($pagination, 'page.number', $this->defaultNumber);
-        $size = Arr::get($pagination, 'page.size', $this->defaultSize);
+        $number = (int) Arr::get($pagination, 'page.number');
+        $size = (int) Arr::get($pagination, 'page.size');
 
         $this->set($client, $number++, $size);
     }
