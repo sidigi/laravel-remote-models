@@ -12,7 +12,7 @@ class Builder
 
     protected $responseKey = '';
 
-    private $filterResponseItemCallback;
+    private $castItemCallback;
 
     protected Model $model;
 
@@ -28,9 +28,9 @@ class Builder
         return $this;
     }
 
-    public function filterResponseItem(Closure $callback)
+    public function castItem(Closure $callback)
     {
-        $this->filterResponseItemCallback = $callback;
+        $this->castItemCallback = $callback;
 
         return $this;
     }
@@ -48,12 +48,12 @@ class Builder
     {
         $this->model = $model;
         $this->client = $model->getClient();
-        $this->responseKey = config('laravel-remote-models.options.response_key');
+        $this->responseKey = config('laravel-remote-models.defaults.response_key');
 
         return $this;
     }
 
-    public function getModel()
+    public function getModel() : Model
     {
         return $this->model;
     }
@@ -63,7 +63,7 @@ class Builder
         $result = $this->forwardCallTo($this->client, $method, $parameters);
 
         if ($method === 'get') {
-            $result->throw();
+            $result = new Response($result);
 
             $items = $result->json() ?? [];
 
@@ -71,23 +71,13 @@ class Builder
                 $items = Arr::get($items, $this->responseKey, []);
             }
 
-            if (! $this->isArrayOfItems($items)) {
-                if (is_callable($this->filterResponseItemCallback)) {
-                    $items = ($this->filterResponseItemCallback)($items);
-                }
+            $result->setModels($items, $this->getModel(), $this->castItemCallback);
 
-                return $this->newModelInstance($items);
-            }
+            return $result;
+        }
 
-            if (is_callable($this->filterResponseItemCallback)) {
-                $items = collect($items)->map(function ($item) {
-                    return ($this->filterResponseItemCallback)($item);
-                })->toArray();
-            }
-
-            return $this->getModel()->newCollection(
-                $this->model->hydrate($items)->all()
-            );
+        if (in_array($method, ['post', 'put', 'patch', 'delete'])) {
+            return new Response($result);
         }
 
         return $this;

@@ -11,7 +11,7 @@ class ExampleTest extends TestCase
     public function true_is_true()
     {
         $jsonApiClient = resolve(JsonApiClient::class, [
-            'options' => [
+            'defaults' => [
                 'base_uri' => 'https://jsonplaceholder.typicode.com',
             ],
         ]);

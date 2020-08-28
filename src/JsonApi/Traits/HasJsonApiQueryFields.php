@@ -42,14 +42,9 @@ trait HasJsonApiQueryFields
         return $this;
     }
 
-    public function paginate(int $size = null, int $number = 1) : self
+    public function paginate(array $data) : self
     {
-        $this->pagination = [
-            'size' => $size,
-            'number' => $number,
-        ];
-
-        return $this;
+        return $this->paginationStrategy->set($this, $data);
     }
 
     public function getQuery() : array

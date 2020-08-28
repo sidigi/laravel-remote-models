@@ -17,15 +17,28 @@ composer require sidigi/laravel-remote-models
 ## Usage
 
 ### Config
+
 ```php
-    'options' => [
+    'defaults' => [
         'response_key' => 'data',
+        'pagination_strategy' => 'page_based',
+    ],
+
+    'pagination_strategies' => [
+        'page_based' => [
+            'class' => Sidigi\LaravelRemoteModels\JsonApi\Pagination\PageBasedStrategy::class,
+            'defaults' => [
+                'number' => 1,
+                'size' => 100,
+            ],
+        ],
     ],
 
     'clients' => [
         'comment-client' => [
             'client' =>  App\RemoteClients\CommentClient::class,
             'base_uri' => 'https://jsonplaceholder.typicode.com',
+            'pagination_strategy' => 'page_based',
             'paths' => [
                 'index_comments' => 'comments',
                 'index_comments_filter_by_post' => '/comments?postId={id}',
@@ -55,7 +68,6 @@ $comments = Comment::withPath('/comments')->get();
 $comments = Comment::withPath('/comments/{id}', ['id' => 1])->get();
 $comments = Comment::withQuery(['active' => true])->get();
 ```
-
 
 ```php
 use Sidigi\LaravelRemoteModels\Client;
@@ -97,7 +109,6 @@ $comments = CommentClient::withPath('/comments/{id}', ['id' => 1])
 ### Models
 
 ```php
-
 use Sidigi\LaravelRemoteModels\JsonApi\Client;
 
 class CommentClient extends Client
@@ -108,27 +119,32 @@ class Comment extends Model
 {
     protected $guarded = [];
 
-    public function getClientClass() : string
+    public function getClientClass(): string
     {
         return CommentClient::class;
     }
 }
 
-
 $comment = Comment::indexComments()
     ->withResponseKey('data')
     ->filterResponseItem(function ($item) {
         return ['id' => $item['id']];
-    })->get()->first();
-    
+    })
+    ->get()
+    ->getModels() //response with models
+    ->first();
+
 //App\RemoteModels\Comment
 ```
 
 Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`. You can use all http client methods
+
 ```php
 $comment = Comment::indexComments()
     ->withHeaders(['X-Foo' => 'X-Baz']) //withToken, withAuth, etc.
     ->get()
+    ->getModels() //response with models
+    ->first();
 //App\RemoteModels\Comment
 ```
 
