@@ -7,9 +7,11 @@ use Sidigi\LaravelRemoteModels\Response;
 
 interface PaginationStrategyContract
 {
-    public function set(Client $client, array $data) : Client;
+    public function __construct(array $defaults);
 
-    public function setNextPage(Response $response, Client $client);
+    public function set(Client $client, ...$arguments) : Client;
 
-    public function isFinalPage(Response $response, Client $client);
+    public function setNextPage(Response $response, Client $client) : void;
+
+    public function isFinalPage(Response $response, Client $client) : bool;
 }

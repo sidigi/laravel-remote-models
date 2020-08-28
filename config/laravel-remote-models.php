@@ -17,6 +17,7 @@ return [
     'pagination_strategies' => [
         'page_based' => [
             'class' => Sidigi\LaravelRemoteModels\JsonApi\Pagination\PageBasedStrategy::class,
+            'response_number_key' => 'meta.page_count',
             'defaults' => [
                 'number' => 1,
                 'size' => 100,

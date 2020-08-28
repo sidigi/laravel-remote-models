@@ -2,10 +2,10 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
-use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
+use Sidigi\LaravelRemoteModels\Exceptions\PaginationStrategyNotFoundException;
 use Sidigi\LaravelRemoteModels\JsonApi\Pagination\Contracts\PaginationStrategyContract;
 
 class LaravelRemoteModelsServiceProvider extends ServiceProvider
@@ -13,10 +13,7 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPublishables();
-
-        $default = config('laravel-remote-models.defaults.pagination_strategy');
-        $strategy = config("laravel-remote-models.pagination_strategies.$default");
-        $this->registerPaginationStrategies();
+        $this->registerDefaultPaginationStrategy();
         $this->registerClients();
     }
 
@@ -27,10 +24,6 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
 
     protected function registerPublishables() : self
     {
-        if (! $this->app->runningInConsole()) {
-            return $this;
-        }
-
         $this->publishes([
             __DIR__.'/../config/laravel-remote-models.php' => config_path('laravel-remote-models.php'),
         ], 'config');
@@ -38,45 +31,55 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
         return $this;
     }
 
-    protected function registerPaginationStrategies()
+    protected function registerDefaultPaginationStrategy()
     {
         $default = config('laravel-remote-models.defaults.pagination_strategy');
-        $strategy = config("laravel-remote-models.pagination_strategies.$default");
+        $paginationStrategy = config("laravel-remote-models.pagination_strategies.$default");
 
-        if (! class_exists($strategy['class'])) {
-            throw new Exception("Class {$strategy['class']} not found");
+        if (! class_exists($paginationStrategy['class'])) {
+            throw new PaginationStrategyNotFoundException("Class {$paginationStrategy['class']} not found");
         }
 
-        $this->app->bind(PaginationStrategyContract::class, function ($app) use ($strategy) {
-            return $app->make($strategy['class'], ['defaults' => $strategy['defaults'] ?? []]);
-        });
+        $this->app->bind(
+            PaginationStrategyContract::class,
+            fn () => $this->makeStrategyInstance($paginationStrategy)
+        );
     }
 
     protected function registerClients()
     {
         $clients = config('laravel-remote-models.clients', []);
 
-        collect($clients)->each(function ($clientOptions, $key) {
+        collect($clients)->each(function ($clientOptions) {
             $client = $clientOptions['client'] ?? null;
 
             if (! $client) {
                 throw new InvalidArgumentException('client key must be set for client');
             }
 
-            //check instance of client
+            $paginationStrategy = config("laravel-remote-models.pagination_strategies.{$clientOptions['pagination_strategy']}");
 
-            if ($client) {
-                $this->app->bind($client, function ($app) use ($client, $clientOptions) {
-                    $strategy = config("laravel-remote-models.pagination_strategies.{$clientOptions['pagination_strategy']}");
-
-                    return (new $client(
-                        $app->make(PendingRequest::class),
-                        $app->make(UrlManager::class),
-                        $app->make($strategy['class'], ['defaults' => $strategy['defaults'] ?? []])
-                    ))
-                        ->baseUrl($clientOptions['base_uri'] ?? '');
-                });
-            }
+            $this->app->bind(
+                $client,
+                fn () => (new $client(
+                    $this->app->make(PendingRequest::class),
+                    $this->app->make(UrlManager::class),
+                    $this->makeStrategyInstance($paginationStrategy)
+                ))->baseUrl($clientOptions['base_uri'] ?? '')
+            );
         });
+    }
+
+    private function makeStrategyInstance(array $strategy)
+    {
+        $defaults = $strategy['defaults'] ?? [];
+        $defaults['response_number_key'] = $strategy['response_number_key'];
+
+        return $this->app->make(
+            $strategy['class'],
+            [
+                'defaults' => $defaults,
+            ]
+        );
     }
 }
