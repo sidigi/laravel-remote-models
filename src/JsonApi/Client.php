@@ -9,10 +9,10 @@ class Client extends BaseClient implements ClientInterface
 {
     use HasJsonApiQueryFields;
 
-    public function pageIterator($sleep = null, ...$arguments)
+    public function requestIterator($method = 'get', $sleep = null, ...$arguments)
     {
         do {
-            $response = $this->get(...$arguments);
+            $response = $this->$method(...$arguments);
 
             yield $response;
 
