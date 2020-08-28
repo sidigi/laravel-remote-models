@@ -130,8 +130,8 @@ $comment = Comment::indexComments()
     ->filterResponseItem(function ($item) {
         return ['id' => $item['id']];
     })
-    ->get()
-    ->getModels() //response with models
+    ->get() //response with models
+    ->getModels()
     ->first();
 
 //App\RemoteModels\Comment
@@ -142,8 +142,8 @@ Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`
 ```php
 $comment = Comment::indexComments()
     ->withHeaders(['X-Foo' => 'X-Baz']) //withToken, withAuth, etc.
-    ->get()
-    ->getModels() //response with models
+    ->get() //response with models
+    ->getModels()
     ->first();
 //App\RemoteModels\Comment
 ```
