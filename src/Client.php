@@ -18,17 +18,25 @@ class Client implements ClientInterface
     protected PaginationStrategyContract $paginationStrategy;
     protected ?string $path;
     protected array $query = [];
+    protected string $responseKey;
 
     public function __construct(
         PendingRequest $client,
         UrlManager $urlManager,
         PaginationStrategyContract $paginationStrategy,
-        string $path = null
+        string $path = null,
+        string $responseKey = ''
     ) {
         $this->client = $client;
         $this->urlManager = $urlManager;
         $this->paginationStrategy = $paginationStrategy;
         $this->path = $path;
+        $this->responseKey = $responseKey;
+    }
+
+    public function getResponseKey() : string
+    {
+        return $this->responseKey;
     }
 
     public function getPaths() : array
@@ -82,7 +90,7 @@ class Client implements ClientInterface
                 [$url, (in_array($method, ['get', 'head'])) ? $this->getQuery() : $arguments[1] ?? []]
             );
 
-            return resolve(Response::class, ['response' => $response]);
+            return new Response($response, $this->getResponseKey());
         }
 
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {

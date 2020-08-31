@@ -12,27 +12,17 @@ class Response
     use ForwardsCalls;
 
     protected HttpClientResponse $response;
-    protected ?string $key;
+    protected string $responseKey;
 
-    public function __construct(HttpClientResponse $response, ?string $key = null)
+    public function __construct(HttpClientResponse $response, string $responseKey)
     {
         $this->response = $response;
-        $this->key = ! is_null($key)
-            ? $key
-            : config('laravel-remote-models.defaults.response_key', '');
+        $this->responseKey = $responseKey;
     }
 
-    public function withKey(string $key)
+    public function mapModel(string $model, Closure $callback = null, string $responseKey = null)
     {
-        $this->key = $key;
-
-        return $this;
-    }
-
-    public function mapModel(string $model, Closure $callback = null, ?string $responseKey = null)
-    {
-        $model = new $model;
-        $responseKey = ! is_null($responseKey) ? $responseKey : $this->key;
+        $responseKey = ! is_null($responseKey) ? $responseKey : $this->responseKey;
 
         $items = $this->json() ?? [];
 
@@ -40,24 +30,7 @@ class Response
             $items = Arr::get($items, $responseKey, []);
         }
 
-        $items = $this->isArrayOfItems($items) ? $items : [$items];
-
-        if (is_callable($callback)) {
-            $items = collect($items)->map(function ($item) use ($callback) {
-                return ($callback)($item);
-            })->toArray();
-        }
-
-        return $model->newCollection(
-            $model->hydrate($items)->all()
-        );
-    }
-
-    private function isArrayOfItems(array $items) : bool
-    {
-        $itemsOfItemsCount = collect($items)->filter(fn ($item) => is_array($item))->count();
-
-        return count($items) === $itemsOfItemsCount;
+        return (new DataModelConverter($model))->convert($items, $callback);
     }
 
     public function __call($method, $parameters)

@@ -49,9 +49,12 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
     protected function registerClients()
     {
         $clients = config('laravel-remote-models.clients', []);
+        $defaultResponseKey = config('laravel-remote-models.defaults.response_key', '');
 
-        collect($clients)->each(function ($clientOptions) {
+        collect($clients)->each(function ($clientOptions) use ($defaultResponseKey) {
             $client = $clientOptions['client'] ?? null;
+
+            $responseKey = isset($clientOptions['response_key']) ? $clientOptions['response_key'] : $defaultResponseKey;
 
             if (! $client) {
                 throw new InvalidArgumentException('client key must be set for client');
@@ -65,6 +68,8 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
                     $this->app->make(PendingRequest::class),
                     $this->app->make(UrlManager::class),
                     $this->makeStrategyInstance($paginationStrategy),
+                    null,
+                    $responseKey,
                 ))->baseUrl($clientOptions['base_uri'] ?? '')
             );
         });
