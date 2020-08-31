@@ -127,7 +127,7 @@ class Comment extends Model
 
 $comment = Comment::indexComments()
     ->get() //response with models
-    ->mapModel(fn ($item) => ['id' => $item['id']])
+    ->mapModel(Comment::class, fn ($item) => ['id' => $item['id']])
     ->first();
 
 //App\RemoteModels\Comment
@@ -139,7 +139,7 @@ Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`
 $comment = Comment::indexComments()
     ->withHeaders(['X-Foo' => 'X-Baz']) //withToken, withAuth, etc.
     ->get() //response with models
-    ->mapModel()
+    ->mapModel(Comment::class)
     ->first();
 //App\RemoteModels\Comment
 ```
