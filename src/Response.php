@@ -4,7 +4,6 @@ namespace Sidigi\LaravelRemoteModels;
 
 use Closure;
 use Illuminate\Http\Client\Response as HttpClientResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class Response
@@ -20,6 +19,11 @@ class Response
         $this->responseKey = $responseKey;
     }
 
+    public function get(string $index = '')
+    {
+        return data_get($this->json(), $index, []);
+    }
+
     public function mapModel(string $model, Closure $callback = null, string $responseKey = null)
     {
         $responseKey = ! is_null($responseKey) ? $responseKey : $this->responseKey;
@@ -27,7 +31,7 @@ class Response
         $items = $this->json() ?? [];
 
         if ($responseKey) {
-            $items = Arr::get($items, $responseKey, []);
+            $items = $this->get($responseKey);
         }
 
         return (new DataModelConverter($model))->convert($items, $callback);

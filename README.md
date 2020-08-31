@@ -144,6 +144,34 @@ $comment = Comment::indexComments()
 //App\RemoteModels\Comment
 ```
 
+```php
+$builder = Comment::indexComments();
+
+foreach ($builder->perPage() as $response) {
+    $comments = $response->mapModel(Note::class);
+}
+```
+
+```php
+$builder = Post::index();
+
+foreach ($builder->perPage() as $response) {
+    $comments = $response->mapModel(
+        Comment::class,
+        fn ($item) => ['id' => $item['id']],
+        'data.*.comments'
+    );
+}
+```
+
+```php
+$builder = Post::index();
+
+foreach ($builder->perPage() as $response) {
+    $commentIds = $response->get('data.*.comments.*.id');
+}
+```
+
 Detail information about laravel http client [here](https://laravel.com/docs/7.x/http-client)
 
 ## Testing
