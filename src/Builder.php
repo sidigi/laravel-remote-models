@@ -2,37 +2,19 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
-use Closure;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class Builder
 {
     use ForwardsCalls;
 
-    protected $responseKey = '';
-
-    private $castItemCallback;
+    private $passthru = ['get', 'head', 'post', 'put', 'patch', 'delete'];
 
     protected Model $model;
 
     public function newModelInstance($attributes = [])
     {
         return $this->model->newInstance($attributes);
-    }
-
-    public function withResponseKey(?string $responseKey)
-    {
-        $this->responseKey = $responseKey;
-
-        return $this;
-    }
-
-    public function castItem(Closure $callback)
-    {
-        $this->castItemCallback = $callback;
-
-        return $this;
     }
 
     public function hydrate(array $items)
@@ -48,7 +30,6 @@ class Builder
     {
         $this->model = $model;
         $this->client = $model->getClient();
-        $this->responseKey = config('laravel-remote-models.defaults.response_key');
 
         return $this;
     }
@@ -62,22 +43,8 @@ class Builder
     {
         $result = $this->forwardCallTo($this->client, $method, $parameters);
 
-        if ($method === 'get') {
-            $result = new Response($result);
-
-            $items = $result->json() ?? [];
-
-            if ($this->responseKey) {
-                $items = Arr::get($items, $this->responseKey, []);
-            }
-
-            $result->setModels($items, $this->getModel(), $this->castItemCallback);
-
-            return $result;
-        }
-
-        if (in_array($method, ['post', 'put', 'patch', 'delete'])) {
-            return new Response($result);
+        if (in_array($method, $this->passthru)) {
+            return resolve(Response::class, ['response' => $result]);
         }
 
         return $this;

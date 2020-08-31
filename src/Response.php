@@ -4,24 +4,42 @@ namespace Sidigi\LaravelRemoteModels;
 
 use Closure;
 use Illuminate\Http\Client\Response as HttpClientResponse;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class Response
 {
     use ForwardsCalls;
 
-    protected $models;
     protected HttpClientResponse $response;
+    protected ?string $key;
 
-    public function __construct(HttpClientResponse $response)
+    public function __construct(HttpClientResponse $response, ?string $key = null)
     {
         $this->response = $response;
-        $this->models = new Collection();
+        $this->key = ! is_null($key)
+            ? $key
+            : config('laravel-remote-models.defaults.response_key', '');
     }
 
-    public function setModels(array $items, Model $model, ?Closure $callback)
+    public function withKey(string $key)
     {
+        $this->key = $key;
+
+        return $this;
+    }
+
+    public function mapModel(string $model, Closure $callback = null, ?string $responseKey = null)
+    {
+        $model = new $model;
+        $responseKey = ! is_null($responseKey) ? $responseKey : $this->key;
+
+        $items = $this->json() ?? [];
+
+        if ($responseKey) {
+            $items = Arr::get($items, $responseKey, []);
+        }
+
         $items = $this->isArrayOfItems($items) ? $items : [$items];
 
         if (is_callable($callback)) {
@@ -30,14 +48,9 @@ class Response
             })->toArray();
         }
 
-        $this->models = $model->newCollection(
+        return $model->newCollection(
             $model->hydrate($items)->all()
         );
-    }
-
-    public function getModels()
-    {
-        return $this->models;
     }
 
     private function isArrayOfItems(array $items) : bool

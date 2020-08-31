@@ -61,7 +61,7 @@ trait HasJsonApiQueryFields
 
         $query['include'] = implode(',', $this->includes);
 
-        $query['page'] = $this->pagination;
+        $query['page'] = $this->query['page'] ?? [];
 
         return collect($query)->filter()->toArray();
     }

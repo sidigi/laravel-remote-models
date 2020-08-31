@@ -11,6 +11,8 @@ class Client implements ClientInterface
 {
     use ForwardsCalls;
 
+    private $passthru = ['get', 'head', 'post', 'put', 'patch', 'delete'];
+
     protected PendingRequest $client;
     protected UrlManager $urlManager;
     protected PaginationStrategyContract $paginationStrategy;
@@ -68,7 +70,7 @@ class Client implements ClientInterface
 
     public function __call($method, $arguments)
     {
-        if (in_array($method, ['post', 'put', 'patch', 'delete', 'get', 'head'])) {
+        if (in_array($method, $this->passthru)) {
             $url = $this->getUrl(
                 $url ?? $this->path,
                 $arguments
@@ -80,7 +82,7 @@ class Client implements ClientInterface
                 [$url, (in_array($method, ['get', 'head'])) ? $this->getQuery() : $arguments[1] ?? []]
             );
 
-            return new Response($response);
+            return resolve(Response::class, ['response' => $response]);
         }
 
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {

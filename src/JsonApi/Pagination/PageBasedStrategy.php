@@ -31,9 +31,14 @@ class PageBasedStrategy implements PaginationStrategyContract
         ]);
     }
 
-    protected function getPagination(Client $client) : ?array
+    public function getPagination(Client $client) : ?array
     {
-        return Arr::get($client->getQuery(), 'page');
+        return [
+            'page' => [
+                'number' => (int) Arr::get($client->getQuery(), 'page.number'),
+                'size' => (int) Arr::get($client->getQuery(), 'page.size'),
+            ],
+        ];
     }
 
     public function setNextPage(Response $response, Client $client) : void
@@ -42,12 +47,9 @@ class PageBasedStrategy implements PaginationStrategyContract
             throw new Exception('Response has invalid meta.page_count key');
         }
 
-        $pagination = $this->getPagination($client);
+        $pagination = $this->getPagination($client)['page'];
 
-        $number = (int) Arr::get($pagination, 'page.number');
-        $size = (int) Arr::get($pagination, 'page.size');
-
-        $this->set($client, $number++, $size);
+        $this->set($client, ++$pagination['number'], $pagination['size']);
     }
 
     public function isFinalPage(Response $response, Client $client) : bool

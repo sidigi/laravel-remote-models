@@ -10,7 +10,6 @@ return [
     |
     */
     'defaults' => [
-        'response_key' => 'data',
         'pagination_strategy' => 'page_based',
     ],
 

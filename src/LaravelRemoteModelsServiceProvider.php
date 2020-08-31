@@ -64,7 +64,7 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
                 fn () => (new $client(
                     $this->app->make(PendingRequest::class),
                     $this->app->make(UrlManager::class),
-                    $this->makeStrategyInstance($paginationStrategy)
+                    $this->makeStrategyInstance($paginationStrategy),
                 ))->baseUrl($clientOptions['base_uri'] ?? '')
             );
         });
