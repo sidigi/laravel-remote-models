@@ -50,17 +50,19 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
     {
         $clients = config('laravel-remote-models.clients', []);
         $defaultResponseKey = config('laravel-remote-models.defaults.response_key', '');
+        $defaultPaginationStrategy = config('laravel-remote-models.defaults.pagination_strategy');
 
-        collect($clients)->each(function ($clientOptions) use ($defaultResponseKey) {
+        collect($clients)->each(function ($clientOptions) use ($defaultResponseKey, $defaultPaginationStrategy) {
             $client = $clientOptions['client'] ?? null;
 
             $responseKey = isset($clientOptions['response_key']) ? $clientOptions['response_key'] : $defaultResponseKey;
 
+            $clientOptions['pagination_strategy'] = $clientOptions['pagination_strategy'] ?? $defaultPaginationStrategy;
+            $paginationStrategy = config("laravel-remote-models.pagination_strategies.{$clientOptions['pagination_strategy']}");
+
             if (! $client) {
                 throw new InvalidArgumentException('client key must be set for client');
             }
-
-            $paginationStrategy = config("laravel-remote-models.pagination_strategies.{$clientOptions['pagination_strategy']}");
 
             $this->app->bind(
                 $client,
