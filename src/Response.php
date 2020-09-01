@@ -21,6 +21,10 @@ class Response
 
     public function get(string $index = '')
     {
+        if (! $index) {
+            return $this->json();
+        }
+
         return data_get($this->json(), $index, []);
     }
 
@@ -28,11 +32,7 @@ class Response
     {
         $responseKey = ! is_null($responseKey) ? $responseKey : $this->responseKey;
 
-        $items = $this->json() ?? [];
-
-        if ($responseKey) {
-            $items = $this->get($responseKey);
-        }
+        $items = $this->get($responseKey) ?? [];
 
         return (new DataModelConverter($model))->convert($items, $callback);
     }
