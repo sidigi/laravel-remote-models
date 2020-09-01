@@ -63,10 +63,13 @@ class CommentClient extends Client
 {
 }
 
-$comments = Comment::get('/comments/{id}', ['id' => 1])->get();
-$comments = Comment::withPath('/comments')->get();
+$comments = Comment::get();
+$comments = Comment::get('/comments');
+$comments = Comment::get('/comments/{id}', ['id' => 1]);
+$comments = Comment::get('/comments/{id}', ['id' => 1, 'active' => true]);
 $comments = Comment::withPath('/comments/{id}', ['id' => 1])->get();
 $comments = Comment::withQuery(['active' => true])->get();
+$comments = Comment::get(['active' => true]);
 ```
 
 ```php

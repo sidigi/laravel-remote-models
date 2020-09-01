@@ -28,6 +28,11 @@ class Response
         return data_get($this->json(), $index, []);
     }
 
+    public function errors(string $key = 'errors')
+    {
+        return $this->get($key);
+    }
+
     public function mapModel(string $model, Closure $callback = null, string $responseKey = null)
     {
         $responseKey = ! is_null($responseKey) ? $responseKey : $this->responseKey;

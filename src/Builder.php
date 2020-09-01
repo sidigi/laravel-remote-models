@@ -44,7 +44,7 @@ class Builder
         $result = $this->forwardCallTo($this->client, $method, $parameters);
 
         if (in_array($method, $this->passthru)) {
-            return new Response($result, $this->client->getResponseKey());
+            return $result;
         }
         if ($method === 'perPage') {
             return $this->forwardCallTo($this->client, $method, $parameters);

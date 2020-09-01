@@ -71,7 +71,7 @@ class Client implements ClientInterface
     protected function getUrl(string $url, array $parameters = [])
     {
         return $this->urlManager->resolve(
-            $url,
+            preg_replace('/([^:])(\/{2,})/', '$1/', $url),
             $parameters
         );
     }
@@ -79,18 +79,7 @@ class Client implements ClientInterface
     public function __call($method, $arguments)
     {
         if (in_array($method, $this->passthru)) {
-            $url = $this->getUrl(
-                $url ?? $this->path,
-                $arguments
-            );
-
-            $response = $this->forwardCallTo(
-                $this->client,
-                $method,
-                [$url, (in_array($method, ['get', 'head'])) ? $this->getQuery() : $arguments[1] ?? []]
-            );
-
-            return new Response($response, $this->getResponseKey());
+            return $this->passthru($method, ...$arguments);
         }
 
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {
@@ -108,5 +97,34 @@ class Client implements ClientInterface
         }
 
         return $result;
+    }
+
+    protected function passthru($method, ...$arguments)
+    {
+        if (! isset($arguments[0]) || (isset($arguments[0]) && ! is_string($arguments[0]))) {
+            array_unshift($arguments, '');
+        }
+
+        $url = preg_replace('/(\/+)/', '/', $this->path.'/'.$arguments[0]);
+        $query = $query[1] ?? [];
+        $parameters = $arguments[2] ?? [];
+
+        $url = $this->getUrl(
+            $url,
+            $query
+        );
+
+        $response = $this->forwardCallTo(
+            $this->client,
+            $method,
+            [
+                $url,
+                (in_array($method, ['get', 'head']))
+                    ? $query + $this->getQuery()
+                    : $parameters,
+            ]
+        );
+
+        return new Response($response, $this->getResponseKey());
     }
 }

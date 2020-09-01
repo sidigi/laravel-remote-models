@@ -46,6 +46,11 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializab
         $this->fill($attributes);
     }
 
+    public static function query()
+    {
+        return (new static)->newQuery();
+    }
+
     public function newQuery()
     {
         return (new Builder)->setModel($this);
