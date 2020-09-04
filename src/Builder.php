@@ -11,6 +11,7 @@ class Builder
     private $passthru = ['get', 'head', 'post', 'put', 'patch', 'delete'];
 
     protected Model $model;
+    protected $client;
 
     public function newModelInstance($attributes = [])
     {
