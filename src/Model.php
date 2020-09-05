@@ -13,11 +13,12 @@ use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use JsonSerializable;
+use Sidigi\LaravelRemoteModels\Concerns\HasRelationships;
 use Sidigi\LaravelRemoteModels\Exceptions\ClientNotFoundException;
 
 abstract class Model implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
-    use HasAttributes, ForwardsCalls, GuardsAttributes, HidesAttributes;
+    use HasAttributes, ForwardsCalls, GuardsAttributes, HidesAttributes, HasRelationships;
 
     public $timestamps = false;
 
