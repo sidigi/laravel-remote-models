@@ -120,6 +120,8 @@ class CommentClient extends Client
 
 class Comment extends Model
 {
+    use HasRemotes;
+
     protected $guarded = [];
 
     public function getClientClass(): string
