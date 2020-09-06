@@ -2,11 +2,10 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
-use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Collection;
 use Sidigi\LaravelRemoteModels\Exceptions\ClientNotFoundException;
 
-abstract class Model extends EloquentModel
+trait HasRemotes
 {
     protected function getClientClass() : string
     {
@@ -24,11 +23,6 @@ abstract class Model extends EloquentModel
     public function getClient() : ClientInterface
     {
         return resolve($this->getClientClass());
-    }
-
-    public static function query()
-    {
-        return (new static)->newQuery();
     }
 
     public function newQuery()

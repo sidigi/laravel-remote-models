@@ -2,6 +2,7 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 class Builder
