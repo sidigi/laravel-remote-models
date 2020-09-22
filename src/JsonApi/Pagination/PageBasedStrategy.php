@@ -35,8 +35,8 @@ class PageBasedStrategy implements PaginationStrategyContract
     {
         return [
             'page' => [
-                'number' => (int) Arr::get($client->getQuery(), 'page.number'),
-                'size' => (int) Arr::get($client->getQuery(), 'page.size'),
+                'number' => (int) Arr::get($client->getQuery(), 'page.number', $this->defaultNumber),
+                'size' => (int) Arr::get($client->getQuery(), 'page.size', $this->defaultSize),
             ],
         ];
     }
@@ -62,7 +62,7 @@ class PageBasedStrategy implements PaginationStrategyContract
             return true;
         }
 
-        if ($pageCount > $number) {
+        if ($pageCount >= $number) {
             return false;
         }
 
