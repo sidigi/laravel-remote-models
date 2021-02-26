@@ -45,7 +45,8 @@ class PendingRequest extends ClientPendingRequest
 
             if (is_array($options[$this->bodyFormat])) {
                 $options[$this->bodyFormat] = array_merge(
-                    $options[$this->bodyFormat], $this->pendingFiles
+                    $options[$this->bodyFormat],
+                    $this->pendingFiles
                 );
             }
         }
