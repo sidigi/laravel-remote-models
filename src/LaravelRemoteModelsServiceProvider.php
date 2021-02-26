@@ -4,16 +4,18 @@ namespace Sidigi\LaravelRemoteModels;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\ServiceProvider;
-use InvalidArgumentException;
-use Sidigi\LaravelRemoteModels\Exceptions\PaginationStrategyNotFoundException;
-use Sidigi\LaravelRemoteModels\JsonApi\Pagination\Contracts\PaginationStrategyContract;
+use Sidigi\LaravelRemoteModels\Clients\AwsLambda\PendingRequest as AwsLambdaPendingRequest;
+use Sidigi\LaravelRemoteModels\Mixins\HelperRequestMixin;
+use Sidigi\LaravelRemoteModels\Mixins\JsonApiRequestMixin;
+use Sidigi\LaravelRemoteModels\Services\ClientRegistrator;
 
 class LaravelRemoteModelsServiceProvider extends ServiceProvider
 {
     public function boot()
     {
         $this->registerPublishables();
-        $this->registerDefaultPaginationStrategy();
+        $this->registerFacades();
+        $this->registerRequestMacro();
         $this->registerClients();
     }
 
@@ -31,62 +33,23 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
         return $this;
     }
 
-    protected function registerDefaultPaginationStrategy()
+    public function registerFacades()
     {
-        $default = config('laravel-remote-models.defaults.pagination_strategy');
-        $paginationStrategy = config("laravel-remote-models.pagination_strategies.$default");
-
-        if (! class_exists($paginationStrategy['class'])) {
-            throw new PaginationStrategyNotFoundException("Class {$paginationStrategy['class']} not found");
-        }
-
-        $this->app->bind(
-            PaginationStrategyContract::class,
-            fn () => $this->makeStrategyInstance($paginationStrategy)
-        );
+        $this->app->bind('aws-lambda', function () {
+            return resolve(AwsLambdaPendingRequest::class);
+        });
     }
 
     protected function registerClients()
     {
-        $clients = config('laravel-remote-models.clients', []);
-        $defaultResponseKey = config('laravel-remote-models.defaults.response_key', '');
-        $defaultPaginationStrategy = config('laravel-remote-models.defaults.pagination_strategy');
-
-        collect($clients)->each(function ($clientOptions) use ($defaultResponseKey, $defaultPaginationStrategy) {
-            $client = $clientOptions['client'] ?? null;
-
-            $responseKey = isset($clientOptions['response_key']) ? $clientOptions['response_key'] : $defaultResponseKey;
-
-            $clientOptions['pagination_strategy'] = $clientOptions['pagination_strategy'] ?? $defaultPaginationStrategy;
-            $paginationStrategy = config("laravel-remote-models.pagination_strategies.{$clientOptions['pagination_strategy']}");
-
-            if (! $client) {
-                throw new InvalidArgumentException('client key must be set for client');
-            }
-
-            $this->app->bind(
-                $client,
-                fn () => (new $client(
-                    $this->app->make(PendingRequest::class),
-                    $this->app->make(UrlManager::class),
-                    $this->makeStrategyInstance($paginationStrategy),
-                    null,
-                    $responseKey,
-                ))->baseUrl($clientOptions['base_uri'] ?? '')
-            );
+        collect(config('laravel-remote-models.clients', []))->each(function ($clientOptions) {
+            (new ClientRegistrator($this->app, $clientOptions))->register();
         });
     }
 
-    private function makeStrategyInstance(array $strategy)
+    public function registerRequestMacro()
     {
-        $defaults = $strategy['defaults'] ?? [];
-        $defaults['response_number_key'] = $strategy['response_number_key'];
-
-        return $this->app->make(
-            $strategy['class'],
-            [
-                'defaults' => $defaults,
-            ]
-        );
+        PendingRequest::mixin(new HelperRequestMixin());
+        PendingRequest::mixin(new JsonApiRequestMixin());
     }
 }

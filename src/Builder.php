@@ -23,7 +23,7 @@ class Builder
     {
         $instance = $this->newModelInstance();
 
-        return $instance->newCollection(array_map(function ($item) use ($instance) {
+        return $instance->newRemoteCollection(array_map(function ($item) use ($instance) {
             return $instance->newFromBuilder($item);
         }, $items));
     }
@@ -31,7 +31,7 @@ class Builder
     public function setModel(Model $model)
     {
         $this->model = $model;
-        $this->client = $model->getClient();
+        $this->client = $model->getRemoteClient();
 
         return $this;
     }
@@ -53,14 +53,5 @@ class Builder
         }
 
         return $this;
-    }
-
-    private function isArrayOfItems(array $items) : bool
-    {
-        $itemsOfItemsCount = collect($items)->filter(function ($item) {
-            return is_array($item);
-        })->count();
-
-        return count($items) === $itemsOfItemsCount;
     }
 }

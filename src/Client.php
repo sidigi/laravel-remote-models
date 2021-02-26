@@ -5,38 +5,22 @@ namespace Sidigi\LaravelRemoteModels;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
-use Sidigi\LaravelRemoteModels\JsonApi\Pagination\Contracts\PaginationStrategyContract;
 
-class Client implements ClientInterface
+class Client
 {
     use ForwardsCalls;
 
     private $passthru = ['get', 'head', 'post', 'put', 'patch', 'delete'];
 
     protected PendingRequest $client;
-    protected UrlManager $urlManager;
-    protected PaginationStrategyContract $paginationStrategy;
-    protected ?string $path;
-    protected array $query = [];
     protected string $responseKey;
 
     public function __construct(
         PendingRequest $client,
-        UrlManager $urlManager,
-        PaginationStrategyContract $paginationStrategy,
-        string $path = null,
-        string $responseKey = ''
+        string $responseKey = 'data'
     ) {
         $this->client = $client;
-        $this->urlManager = $urlManager;
-        $this->paginationStrategy = $paginationStrategy;
-        $this->path = $path;
         $this->responseKey = $responseKey;
-    }
-
-    public function getResponseKey() : string
-    {
-        return $this->responseKey;
     }
 
     public function getPaths() : array
@@ -49,33 +33,6 @@ class Client implements ClientInterface
             })['paths'] ?? [];
     }
 
-    public function withPath(string $path, array $parameters = [])
-    {
-        $this->path = $this->getUrl($this->getPaths()[$path] ?? $path, $parameters);
-
-        return $this;
-    }
-
-    public function withQuery(array $query = [])
-    {
-        $this->query = $query + $this->query;
-
-        return $this;
-    }
-
-    public function getQuery() : array
-    {
-        return $this->query;
-    }
-
-    protected function getUrl(string $url, array $parameters = [])
-    {
-        return $this->urlManager->resolve(
-            preg_replace('/([^:])(\/{2,})/', '$1/', $url),
-            $parameters
-        );
-    }
-
     public function __call($method, $arguments)
     {
         if (in_array($method, $this->passthru)) {
@@ -83,7 +40,7 @@ class Client implements ClientInterface
         }
 
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {
-            $this->path = $this->getUrl($path, ...$arguments);
+            $this->client->withPath($path, $arguments[0]);
 
             return $this;
         }
@@ -101,17 +58,12 @@ class Client implements ClientInterface
 
     protected function passthru($method, ...$arguments)
     {
-        if (! isset($arguments[0]) || (isset($arguments[0]) && ! is_string($arguments[0]))) {
-            array_unshift($arguments, '');
-        }
+        $url = count($arguments) <= 2 ? $arguments[0] ?? '' : '';
+        $parameters = count($arguments) === 2 ? $arguments[1] : [];
 
-        $url = preg_replace('/(\/+)/', '/', $this->path.'/'.$arguments[0]);
-        $query = $query[1] ?? [];
-        $parameters = $arguments[2] ?? [];
-
-        $url = $this->getUrl(
-            $url,
-            $query
+        $url = ltrim(
+            rtrim($this->getPath(), '/').'/'.ltrim($url, '/'),
+            '/'
         );
 
         $response = $this->forwardCallTo(
@@ -119,12 +71,15 @@ class Client implements ClientInterface
             $method,
             [
                 $url,
-                (in_array($method, ['get', 'head']))
-                    ? $query + $this->getQuery()
-                    : $parameters,
+                $parameters,
             ]
         );
 
         return new Response($response, $this->getResponseKey());
+    }
+
+    public function getResponseKey() : string
+    {
+        return $this->responseKey;
     }
 }

@@ -46,7 +46,10 @@
         "laravel": {
             "providers": [
                 "Sidigi\\LaravelRemoteModels\\LaravelRemoteModelsServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "AwsLambda": "Sidigi\\LaravelRemoteModels\\Support\\Facades\\AwsLambda"
+            }
         }
     },
     "config": {
