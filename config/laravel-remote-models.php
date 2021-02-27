@@ -1,5 +1,9 @@
 <?php
 
+use Sidigi\LaravelRemoteModels\Pagination\PaginationBaseStrategy;
+use Sidigi\LaravelRemoteModels\Providers\AwsLambdaProvider;
+use Sidigi\LaravelRemoteModels\Providers\HttpProvider;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -10,17 +14,26 @@ return [
     |
     */
     'defaults' => [
-        'response_key' => 'data',
+        'response_key'        => 'data',
         'pagination_strategy' => 'page_based',
+    ],
+
+    'providers' => [
+        'aws-lambda' => [
+            'class' => AwsLambdaProvider::class,
+        ],
+        'http' => [
+            'class' => HttpProvider::class,
+        ],
     ],
 
     'pagination_strategies' => [
         'page_based' => [
-            'class' => Sidigi\LaravelRemoteModels\JsonApi\Pagination\PageBasedStrategy::class,
-            'response_number_key' => 'meta.page',
-            'defaults' => [
+            'class'               => PaginationBaseStrategy::class,
+            'response_number_key' => 'meta.pages_count',
+            'defaults'            => [
                 'number' => 1,
-                'size' => 100,
+                'size'   => 100,
             ],
         ],
     ],
@@ -34,10 +47,22 @@ return [
     |        'client' =>  App\Clients\CommentClient::class,
     |        'base_uri' => 'base uri',
     |        'response_key' => 'data',
-    |        'pagination_strategy' => 'page-based'  //cursor-based / Page-based
+    |        'pagination_strategy' => 'page-based'
     |        'paths' => [
     |            'index_comments' => 'comments',
     |            'index_comments_by_post' => '/comments?postId={id}',
+    |        ],
+    |    ],
+    |    'aws-user-client'    => [
+    |        'client'   => App\Clients\UserAwsClient::class,
+    |        'function_name' => 'user-service-api',
+    |        'provider' => 'aws-lambda',
+    |        'base_uri' => env('USER_MICRO_SERVICE_BASE_URL', ''),
+    |        'paths'    => [
+    |            'me'             => 'me',
+    |            'index_user'    => 'users',
+    |            'detail_user'    => 'users/{id}',
+    |            'detail_company' => 'companies/{id}',
     |        ],
     |    ],
     |

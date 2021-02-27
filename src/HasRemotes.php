@@ -2,36 +2,35 @@
 
 namespace Sidigi\LaravelRemoteModels;
 
-use Illuminate\Support\Collection;
 use Sidigi\LaravelRemoteModels\Exceptions\ClientNotFoundException;
 
 trait HasRemotes
 {
-    protected function getClientClass() : string
+    protected static function getClientOptions() : array
     {
         if (! $client = config('laravel-remote-models.models.'.static::class)) {
             throw new ClientNotFoundException('Client not found');
         }
 
         if (is_string($client) && ! class_exists($client)) {
-            $client = config("laravel-remote-models.clients.$client.client");
+            return [$client, config("laravel-remote-models.clients.$client")];
         }
 
-        return $client;
+        if (is_array($client)) {
+            return [$client];
+        }
     }
 
-    public function getClient() : ClientInterface
+    public static function getRemoteClient(string $client = null)
     {
-        return resolve($this->getClientClass());
-    }
+        [$alias] = static::getClientOptions();
 
-    public function newQuery()
-    {
-        return (new Builder)->setModel($this);
-    }
+        if (is_array($alias)) {
+            $alias = $client
+                ? $alias[$client]
+                : reset($alias);
+        }
 
-    public function newCollection(array $models = [])
-    {
-        return new Collection($models);
+        return resolve($alias);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidigi\LaravelRemoteModels;
+namespace Sidigi\LaravelRemoteModels\Support;
 
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Contracts\Validation\Factory;
