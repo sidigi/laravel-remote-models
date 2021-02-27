@@ -34,7 +34,7 @@ class Client
             'headers' => $options['headers'] ?? [],
             'multiValueHeaders' => $options['multiValueHeaders'] ?? [],
             'queryStringParameters' => $options['query'] ?? [],
-            'multiValueQueryStringParameters' =>  $options['multiValueQueryStringParameters'] ?? [],
+            'multiValueQueryStringParameters' => $options['multiValueQueryStringParameters'] ?? [],
             'pathParameters' => $options['pathParameters'] ?? [],
             'stageVariables' => $options['stageVariables'] ?? [],
             'requestContext' => $options['requestContext'] ?? [],
