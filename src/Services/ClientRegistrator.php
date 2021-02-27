@@ -4,40 +4,42 @@ namespace Sidigi\LaravelRemoteModels\Services;
 
 use Illuminate\Contracts\Foundation\Application;
 use InvalidArgumentException;
+use Sidigi\LaravelRemoteModels\Providers\AwsLambdaProvider;
+use Sidigi\LaravelRemoteModels\Providers\ProviderInterface;
 
 class ClientRegistrator
 {
     private Application $app;
     private array $options;
-    private string $client;
+    private string $clientName;
+    private string $clientClass;
+    private string $paginationStrategyName;
 
-    public function __construct(Application $app, array $options)
+    public function __construct(Application $app, string $clientName, array $options)
     {
         $this->app = $app;
+        $this->clientName = $clientName;
         $this->options = $options;
 
-        $this->client = $this->options['client'];
+        $this->clientClass = $this->options['client'];
+        $this->paginationStrategyName = $this->options['pagination_strategy'] ?? $this->defaultPaginationStrategy();
     }
 
     public function register()
     {
-        $this->options['pagination_strategy'] = $this->options['pagination_strategy'] ?? $$this->defaultPaginationStrategy();
-
         $this->validateClient();
 
-        if (app()->bound($this->client)) {
+        if (app()->bound($this->clientClass)) {
             return;
         }
 
         $this->app->bind(
-            $this->client,
+            $this->clientClass,
             function () {
-                $provider = $this->getProvider();
-                $responseKey = $this->getResponseKey();
-
-                $clientObj = new ($this->client)(
-                    $this->app->make($provider['request_class']),
-                    $responseKey
+                $clientObj = new ($this->clientClass)(
+                    $this->getProvider()->request(),
+                    $this->getResponseKey(),
+                    $this->getPaths()
                 );
 
                 $clientObj->baseUrl($this->options['base_uri'] ?? '');
@@ -58,6 +60,8 @@ class ClientRegistrator
                 return $clientObj;
             }
         );
+
+        $this->app->alias($this->clientClass, $this->clientName);
     }
 
     public function defaultResponseKey() : string
@@ -70,14 +74,19 @@ class ClientRegistrator
         return  config('laravel-remote-models.defaults.pagination_strategy', '');
     }
 
-    public function getProvider()
+    public function getProvider() : ProviderInterface
     {
-        return config("laravel-remote-models.providers.{$this->options['provider']}");
+        return resolve(config("laravel-remote-models.providers.{$this->options['provider']}.class"));
+    }
+
+    public function getPaths() : array
+    {
+        return $this->options['paths'] ?? [];
     }
 
     public function getPaginationStrategy()
     {
-        return config("laravel-remote-models.pagination_strategies.{$this->options['pagination_strategy']}");
+        return config("laravel-remote-models.pagination_strategies.{$this->paginationStrategyName}");
     }
 
     public function getResponseKey()
@@ -99,7 +108,7 @@ class ClientRegistrator
             throw new InvalidArgumentException('base_uri must be set for client');
         }
 
-        if ($this->getProvider()['request_class'] === AwsLambdaPendingRequest::class) {
+        if ($this->getProvider() instanceof AwsLambdaProvider) {
             if (empty($this->options['function_name'])) {
                 throw new InvalidArgumentException('function_name must be set for client');
             }

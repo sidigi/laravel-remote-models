@@ -11,18 +11,18 @@ use Sidigi\LaravelRemoteModels\Services\JsonApiRequest\SortService;
 
 class JsonApiRequestMixin
 {
-    public function filter($column, $value = null)
+    public function filter()
     {
-        return function () use ($column, $value) {
+        return function ($column, $value = null) {
             return tap($this, function () use ($column, $value) {
                 $this->options['query']['filter'] = (new FilterService($column, $value))->toJsonApi();
             });
         };
     }
 
-    public function withFilter($column, $value = null)
+    public function withFilter()
     {
-        return function () use ($column, $value) {
+        return function ($column, $value = null) {
             return tap($this, function () use ($column, $value) {
                 $this->options['query']['filter'] = (new FilterService($column, $value))
                     ->withFilter($this->options['query']['filter'] ?? [])
@@ -31,9 +31,9 @@ class JsonApiRequestMixin
         };
     }
 
-    public function orderBy($order, string $asc = 'asc')
+    public function orderBy()
     {
-        return function () use ($order, $asc) {
+        return function ($order, string $asc = 'asc') {
             return tap($this, function () use ($order, $asc) {
                 $this->options['query']['sort'] = (new SortService($order, $asc))
                     ->withSort($this->options['query']['sort'] ?? '')
@@ -42,9 +42,9 @@ class JsonApiRequestMixin
         };
     }
 
-    public function orderByDesc($order)
+    public function orderByDesc()
     {
-        return function () use ($order) {
+        return function ($order) {
             return tap($this, function () use ($order) {
                 $this->options['query']['sort'] = (new SortService($order, 'desc'))
                 ->withSort($this->options['query']['sort'] ?? '')
@@ -53,18 +53,18 @@ class JsonApiRequestMixin
         };
     }
 
-    public function include(...$includes)
+    public function include()
     {
-        return function () use ($includes) {
+        return function (...$includes) {
             return tap($this, function () use ($includes) {
                 $this->options['query']['include'] = (new IncludeService($includes))->toJsonApi();
             });
         };
     }
 
-    public function paginate($data)
+    public function paginate()
     {
-        return function () use ($data) {
+        return function ($data) {
             return tap($this, function () use ($data) {
                 $strategy = $this->options['pagination_strategy'];
 
@@ -82,9 +82,9 @@ class JsonApiRequestMixin
         };
     }
 
-    public function setPaginationStrategy(string $strategyClass, string $responseKey, array $defaults)
+    public function setPaginationStrategy()
     {
-        return function () use ($strategyClass, $responseKey, $defaults) {
+        return function (string $strategyClass, string $responseKey, array $defaults) {
             return tap($this, function () use ($strategyClass, $responseKey, $defaults) {
                 $strategy = resolve($strategyClass, ['request' => $this, 'responseKeyPageNumber' => $responseKey, 'defaults' => $defaults]);
 
@@ -104,9 +104,9 @@ class JsonApiRequestMixin
         };
     }
 
-    public function perPage($method = 'get', $sleep = null, ...$arguments)
+    public function perPage()
     {
-        return function () use ($method, $sleep, $arguments) {
+        return function ($method = 'get', $sleep = null, ...$arguments) {
             $strategy = $this->getPaginationStrategy();
 
             do {

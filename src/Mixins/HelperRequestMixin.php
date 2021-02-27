@@ -2,11 +2,13 @@
 
 namespace Sidigi\LaravelRemoteModels\Mixins;
 
+use Sidigi\LaravelRemoteModels\Support\UrlManager;
+
 class HelperRequestMixin
 {
-    public function withQuery(array $query)
+    public function withQuery()
     {
-        return function () use ($query) {
+        return function (array $query) {
             return tap($this, function () use ($query) {
                 $this->options['query'] = array_replace_recursive($this->options['query'] ?? [], $query);
             });
@@ -20,9 +22,9 @@ class HelperRequestMixin
         };
     }
 
-    public function withPath(string $path, array $parameters = [])
+    public function withPath()
     {
-        return function () use ($path, $parameters) {
+        return function (string $path, array $parameters = []) {
             return tap($this, function () use ($path, $parameters) {
                 $this->options['path'] = resolve(UrlManager::class)->resolve($path, $parameters);
             });

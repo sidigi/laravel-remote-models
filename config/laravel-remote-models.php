@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Http\Client\PendingRequest;
-use Sidigi\LaravelRemoteModels\Clients\AwsLambda\PendingRequest as AwsPendingRequest;
 use Sidigi\LaravelRemoteModels\Pagination\PaginationBaseStrategy;
+use Sidigi\LaravelRemoteModels\Providers\AwsLambdaProvider;
+use Sidigi\LaravelRemoteModels\Providers\HttpProvider;
 
 return [
     /*
@@ -20,10 +20,10 @@ return [
 
     'providers' => [
         'aws-lambda' => [
-            'request_class' => AwsPendingRequest::class,
+            'class' => AwsLambdaProvider::class,
         ],
         'http' => [
-            'request_class' => PendingRequest::class,
+            'class' => HttpProvider::class,
         ],
     ],
 

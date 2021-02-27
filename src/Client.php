@@ -14,23 +14,21 @@ class Client
 
     protected PendingRequest $client;
     protected string $responseKey;
+    protected array $paths = [];
 
     public function __construct(
         PendingRequest $client,
-        string $responseKey = 'data'
+        string $responseKey = 'data',
+        array $paths = []
     ) {
         $this->client = $client;
         $this->responseKey = $responseKey;
+        $this->paths = $paths;
     }
 
     public function getPaths() : array
     {
-        return collect(config('laravel-remote-models.clients'))
-            ->first(function ($client) {
-                if ($this instanceof $client['client']) {
-                    return true;
-                }
-            })['paths'] ?? [];
+        return $this->paths;
     }
 
     public function __call($method, $arguments)

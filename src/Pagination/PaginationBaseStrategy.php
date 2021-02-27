@@ -49,7 +49,7 @@ class PaginationBaseStrategy implements PaginationStrategyInterface
         return Arr::get($this->request->getQuery(), 'page.number', $this->defaults['number']);
     }
 
-    public function getSize()
+    public function getSize() : int
     {
         return Arr::get($this->request->getQuery(), 'page.size', $this->defaults['size']);
     }

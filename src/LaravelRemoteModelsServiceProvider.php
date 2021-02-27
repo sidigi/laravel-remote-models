@@ -42,8 +42,8 @@ class LaravelRemoteModelsServiceProvider extends ServiceProvider
 
     protected function registerClients()
     {
-        collect(config('laravel-remote-models.clients', []))->each(function ($clientOptions) {
-            (new ClientRegistrator($this->app, $clientOptions))->register();
+        collect(config('laravel-remote-models.clients', []))->each(function ($clientOptions, $clientName) {
+            (new ClientRegistrator($this->app, $clientName, $clientOptions))->register();
         });
     }
 

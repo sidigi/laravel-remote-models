@@ -20,16 +20,26 @@ composer require sidigi/laravel-remote-models
 
 ```php
     'defaults' => [
-        'response_key' => 'data',
+        'response_key'        => 'data',
         'pagination_strategy' => 'page_based',
+    ],
+
+    'providers' => [
+        'aws-lambda' => [
+            'class' => Sidigi\LaravelRemoteModels\Providers\AwsLambdaProvider::class,
+        ],
+        'http' => [
+            'class' => Sidigi\LaravelRemoteModels\Providers\HttpProvider::class,
+        ],
     ],
 
     'pagination_strategies' => [
         'page_based' => [
-            'class' => Sidigi\LaravelRemoteModels\JsonApi\Pagination\PageBasedStrategy::class,
-            'defaults' => [
+            'class'               => Sidigi\LaravelRemoteModels\Pagination\PaginationBaseStrategy::class,
+            'response_number_key' => 'meta.pages_count',
+            'defaults'            => [
                 'number' => 1,
-                'size' => 100,
+                'size'   => 100,
             ],
         ],
     ],
@@ -38,6 +48,19 @@ composer require sidigi/laravel-remote-models
         'comment-client' => [
             'client' =>  App\RemoteClients\CommentClient::class,
             'base_uri' => 'https://jsonplaceholder.typicode.com',
+   |        'provider' => 'http',
+            'pagination_strategy' => 'page_based',
+            'paths' => [
+                'index_comments' => 'comments',
+                'index_comments_filter_by_post' => '/comments?postId={id}',
+                'todo_detail' => 'todos/{id}',
+            ],
+        ],
+        'aws-comment-client' => [
+            'client' =>  App\RemoteClients\AwsCommentClient::class,
+            'base_uri' => 'https://jsonplaceholder.typicode.com',
+   |        'provider' => 'aws-lambda',
+            'function_name' => 'user-service-api',
             'pagination_strategy' => 'page_based',
             'paths' => [
                 'index_comments' => 'comments',
@@ -51,6 +74,11 @@ composer require sidigi/laravel-remote-models
         App\RemoteModels\Comment::class => 'comment-client',
         //or
         App\RemoteModels\Comment::class => App\RemoteClients\CommentClient::class,
+        //or
+        App\RemoteModels\Comment::class => [
+            'aws' => 'aws-comment-client',
+            'http' => 'comment-client',
+         ]
     ],
 ```
 
@@ -63,13 +91,13 @@ class CommentClient extends Client
 {
 }
 
-$comments = Comment::get();
-$comments = Comment::get('/comments');
-$comments = Comment::get('/comments/{id}', ['id' => 1]);
-$comments = Comment::get('/comments/{id}', ['id' => 1, 'active' => true]);
-$comments = Comment::withPath('/comments/{id}', ['id' => 1])->get();
-$comments = Comment::withQuery(['active' => true])->get();
-$comments = Comment::get(['active' => true]);
+$comments = Comment::getRemoteClient()->get();
+$comments = Comment::getRemoteClient()->get('/comments');
+$comments = Comment::getRemoteClient()->get('/comments/{id}', ['id' => 1]);
+$comments = Comment::getRemoteClient()->get('/comments/{id}', ['id' => 1, 'active' => true]);
+$comments = Comment::getRemoteClient()->withPath('/comments/{id}', ['id' => 1])->get();
+$comments = Comment::getRemoteClient()->withQuery(['active' => true])->get();
+$comments = Comment::getRemoteClient()->get(['active' => true]);
 ```
 
 ```php
@@ -94,7 +122,7 @@ $comments = CommentClient::detailComment(['id' => 1])->withQuery(['active' => tr
 ```
 
 ```php
-use Sidigi\LaravelRemoteModels\JsonApi\Client;
+use Sidigi\LaravelRemoteModels\Client
 
 class CommentClient extends Client
 {
@@ -105,14 +133,14 @@ $comments = CommentClient::withPath('/comments/{id}', ['id' => 1])
                 ->filter(['id' => [1, 2, 3])
                 ->include('posts.user')
                 ->orderBy('created_at')
-                ->paginate($size = 3, $number = 2)
+                ->paginate(['size' => 1, 'number' => 2])
                 ->get();
 ```
 
 ### Models
 
 ```php
-use Sidigi\LaravelRemoteModels\JsonApi\Client;
+use Sidigi\LaravelRemoteModels\Client;
 
 class CommentClient extends Client
 {
@@ -124,13 +152,14 @@ class Comment extends Model
 
     protected $guarded = [];
 
-    public function getClientClass(): string
+    public function getRemoteClient(): string
     {
-        return CommentClient::class;
+        return resolve(CommentClient::class);
     }
 }
 
-$comment = Comment::indexComments()
+$comment = Comment::getRemoteClient()
+    ->indexComments()
     ->get() //response with models
     ->mapModel(Comment::class, fn ($item) => ['id' => $item['id']])
     ->first();
@@ -138,10 +167,11 @@ $comment = Comment::indexComments()
 //App\RemoteModels\Comment
 ```
 
-Client and Model classes are proxies for `Illuminate\Http\Client\PendingReuqest`. You can use all http client methods
+Client classes are extended `Illuminate\Http\Client\PendingReuqest`. You can use all http client methods
 
 ```php
-$comment = Comment::indexComments()
+$comment = Comment::getRemoteClient()
+    ->indexComments()
     ->withHeaders(['X-Foo' => 'X-Baz']) //withToken, withAuth, etc.
     ->get() //response with models
     ->mapModel(Comment::class)
@@ -150,7 +180,7 @@ $comment = Comment::indexComments()
 ```
 
 ```php
-$builder = Comment::indexComments();
+$builder = Comment::getRemoteClient()->indexComments();
 
 foreach ($builder->perPage() as $response) {
     $comments = $response->mapModel(Note::class);
@@ -158,7 +188,7 @@ foreach ($builder->perPage() as $response) {
 ```
 
 ```php
-$builder = Post::index();
+$builder = Post::getRemoteClient()->index();
 
 foreach ($builder->perPage() as $response) {
     $comments = $response->mapModel(
@@ -170,14 +200,14 @@ foreach ($builder->perPage() as $response) {
 ```
 
 ```php
-$builder = Post::index();
+$builder = Post::getRemoteClient()->index();
 
 foreach ($builder->perPage() as $response) {
     $commentIds = $response->get('data.*.comments.*.id');
 }
 ```
 
-Detail information about laravel http client [here](https://laravel.com/docs/7.x/http-client)
+Detail information about laravel http client [here](https://laravel.com/docs/8.x/http-client)
 
 ## Testing
 
