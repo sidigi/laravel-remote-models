@@ -6,6 +6,21 @@ use Illuminate\Http\Client\Response as ClientResponse;
 
 class Response extends ClientResponse
 {
+    protected $decodedBody;
+
+    public function json($key = null, $default = null)
+    {
+        if (! $this->decodedBody) {
+            $this->decodedBody = json_decode($this->body(), true);
+        }
+
+        if (is_null($key)) {
+            return $this->decodedBody;
+        }
+
+        return data_get($this->decodedBody, $key, $default);
+    }
+
     public function getPayload() : array
     {
         if (! $this->decoded) {

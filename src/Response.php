@@ -19,25 +19,11 @@ class Response
         $this->responseKey = $responseKey;
     }
 
-    public function get(string $index = '')
-    {
-        if (! $index) {
-            return $this->json();
-        }
-
-        return data_get($this->json(), $index, []);
-    }
-
-    public function errors(string $key = 'errors')
-    {
-        return $this->get($key);
-    }
-
     public function mapModel(string $model, Closure $callback = null, string $responseKey = null)
     {
         $responseKey = ! is_null($responseKey) ? $responseKey : $this->responseKey;
 
-        $items = $this->get($responseKey) ?? [];
+        $items = $this->json($responseKey) ?? [];
 
         return (new DataModelConverter($model))->convert($items, $callback);
     }

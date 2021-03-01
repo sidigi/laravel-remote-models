@@ -28,7 +28,7 @@ class Client
 
     protected function getPayload(string $method, string $url, array $options = []) : array
     {
-        return  [
+        $returnOptions = [
             'path' => $url,
             'httpMethod' => $method,
             'headers' => $options['headers'] ?? [],
@@ -41,5 +41,11 @@ class Client
             'body' => $options['json'] ?? '',
             'isBase64Encoded' => $options['isBase64Encoded'] ?? false,
         ];
+
+        if ($options['multiValueHeaders'] ?? false) {
+            $returnOptions['multiValueHeaders'] = $options['multiValueHeaders'];
+        }
+
+        return $returnOptions;
     }
 }
