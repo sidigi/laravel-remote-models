@@ -89,7 +89,7 @@ class JsonApiRequestMixin
                 $strategy = resolve($strategyClass, ['request' => $this, 'responseKeyPageNumber' => $responseKey, 'defaults' => $defaults]);
 
                 if (! $strategy instanceof PaginationStrategyInterface) {
-                    throw new Exception(sprintf('%s must be instance of %s', $strategy::class, PaginationStrategyInterface::class));
+                    throw new Exception(sprintf('%s must be instance of %s', get_class($strategy), PaginationStrategyInterface::class));
                 }
 
                 $this->options['pagination_strategy'] = $strategy;
