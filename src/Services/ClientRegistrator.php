@@ -36,7 +36,9 @@ class ClientRegistrator
         $this->app->bind(
             $this->clientClass,
             function () {
-                $clientObj = new ($this->clientClass)(
+                $clientClass = $this->clientClass;
+
+                $clientObj = new $clientClass(
                     $this->getProvider()->request(),
                     $this->getResponseKey(),
                     $this->getPaths()
