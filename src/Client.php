@@ -38,7 +38,7 @@ class Client
         }
 
         if ($path = $this->getPaths()[Str::snake($method)] ?? null) {
-            $this->client->withPath($path, $arguments[0]);
+            $this->client->withPath($path, $arguments[0] ?? []);
 
             return $this;
         }
