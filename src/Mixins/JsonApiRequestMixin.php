@@ -4,6 +4,7 @@ namespace Sidigi\LaravelRemoteModels\Mixins;
 
 use Exception;
 use Sidigi\LaravelRemoteModels\Pagination\PaginationStrategyInterface;
+use Sidigi\LaravelRemoteModels\Response;
 use Sidigi\LaravelRemoteModels\Services\JsonApiRequest\FilterService;
 use Sidigi\LaravelRemoteModels\Services\JsonApiRequest\IncludeService;
 use Sidigi\LaravelRemoteModels\Services\JsonApiRequest\PaginateService;
@@ -107,12 +108,15 @@ class JsonApiRequestMixin
     public function perPage()
     {
         return function ($method = 'get', $sleep = null, ...$arguments) {
+            /**
+             * @var PaginationStrategyInterface
+             */
             $strategy = $this->getPaginationStrategy();
 
             do {
-                $response = $this->$method(...$arguments);
+                $response = $this->$method($this->options['path'] ?? '', $arguments);
 
-                yield $response;
+                yield new Response($response, config('laravel-remote-models.defaults.response_key', 'data'));
 
                 $strategy->prepareForNextRequest();
 
