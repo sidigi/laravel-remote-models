@@ -32,7 +32,6 @@ class Client
             'path' => $url,
             'httpMethod' => $method,
             'headers' => $options['headers'] ?? [],
-            'multiValueHeaders' => $options['multiValueHeaders'] ?? [],
             'queryStringParameters' => $options['query'] ?? [],
             'multiValueQueryStringParameters' => $options['multiValueQueryStringParameters'] ?? [],
             'pathParameters' => $options['pathParameters'] ?? [],
