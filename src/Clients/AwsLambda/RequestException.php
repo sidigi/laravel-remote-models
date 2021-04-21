@@ -30,7 +30,7 @@ class RequestException extends HttpClientException
         return is_null($summary) ? $message : $message .= ":\n{$summary}\n";
     }
 
-    protected function getSummary(Response $response, $truncateAt = 120)
+    protected function getSummary(Response $response, $truncateAt = 10000)
     {
         $body = $response->getBody();
 
@@ -44,12 +44,12 @@ class RequestException extends HttpClientException
             return;
         }
 
-        $summary = $body->read($truncateAt);
-
         $body->rewind();
 
         if ($size > $truncateAt) {
-            $summary .= ' (truncated...)';
+            $summary = substr($response->body(), 0, $truncateAt).' (truncated...)';
+        } else {
+            $summary = $response->body();
         }
 
         // Matches any printable character, including unicode characters:
